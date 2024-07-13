@@ -52,14 +52,6 @@ public class MediaFormatPresets {
 
         if (longerLength <= LONGER_LENGTH_960x540) return null; // don't upscale
 
-        int residue = LONGER_LENGTH_960x540 * shorterLength % longerLength;
-        if (residue != 0) {
-            double ambiguousShorter = (double) LONGER_LENGTH_960x540 * shorterLength / longerLength;
-            throw new OutputFormatUnavailableException(String.format(
-                    "Could not fit to integer, original: (%d, %d), scaled: (%d, %f)",
-                    longerLength, shorterLength, LONGER_LENGTH_960x540, ambiguousShorter));
-        }
-
         int scaledShorter = LONGER_LENGTH_960x540 * shorterLength / longerLength;
         int width, height;
         if (originalWidth >= originalHeight) {
