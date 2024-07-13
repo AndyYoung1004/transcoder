@@ -13,7 +13,9 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.content.Intent;
-import com.example.transcoder.format.MediaFormatStrategyPresets;
+import android.widget.Toast;
+
+import com.example.transcoder.format.ExportPreset960x540Strategy;
 
 import java.io.IOException;
 
@@ -29,9 +31,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String inputPath = "/sdcard/DCIM/HEVC.mp4";
-                String outputPath = "/sdcard/DCIM/output.mp4";
+                String outputPath = new StringBuilder("/sdcard/DCIM/output").append(Math.random()).append(".mp4").toString();
                 try {
-                    MediaTranscoder.getInstance().transcodeVideo(inputPath, outputPath, MediaFormatStrategyPresets.createExportPreset960x540Strategy(), new MediaTranscoder.Listener() {
+                    MediaTranscoder.getInstance().transcodeVideo(inputPath, outputPath, new ExportPreset960x540Strategy(), new MediaTranscoder.Listener() {
                         @Override
                         public void onTranscodeProgress(double progress) {
 
@@ -39,7 +41,12 @@ public class MainActivity extends AppCompatActivity {
 
                         @Override
                         public void onTranscodeCompleted() {
-
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), "转码完成", Toast.LENGTH_LONG).show();
+                                }
+                            });
                         }
 
                         @Override
