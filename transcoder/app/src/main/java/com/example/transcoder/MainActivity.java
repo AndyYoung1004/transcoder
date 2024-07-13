@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         boolean ret = checkPermission();
-        Log.w("yangliu","ret:"+ret);
+
         findViewById(R.id.play).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
                         @Override
                         public void onTranscodeFailed(Exception exception) {
-
+                            Toast.makeText(getApplicationContext(), "转码失败", Toast.LENGTH_LONG).show();
                         }
                     });
                 } catch (IOException e) {

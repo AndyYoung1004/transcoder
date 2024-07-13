@@ -38,7 +38,6 @@ public class MediaTranscoderEngine {
     private static final long PROGRESS_INTERVAL_STEPS = 10;
     private FileDescriptor mInputFileDescriptor;
     private TrackTranscoder mVideoTrackTranscoder;
-    private TrackTranscoder mAudioTrackTranscoder;
     private MediaExtractor mExtractor;
     private MediaMuxer mMuxer;
     private volatile double mProgress;
@@ -72,7 +71,6 @@ public class MediaTranscoderEngine {
 
     /**
      * Run video transcoding. Blocks current thread.
-     * Audio data will not be transcoded; original stream will be wrote to output file.
      *
      * @param outputPath     File path to output transcoded video file.
      * @param formatStrategy Output format strategy.
@@ -88,7 +86,7 @@ public class MediaTranscoderEngine {
             throw new IllegalStateException("Data source is not set.");
         }
         try {
-            // NOTE: use single extractor to keep from running out audio track fast.
+            // NOTE: use single extractor to keep from running track fast.
             mExtractor = new MediaExtractor();
             mExtractor.setDataSource(mInputFileDescriptor);
             mMuxer = new MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
@@ -101,10 +99,6 @@ public class MediaTranscoderEngine {
                 if (mVideoTrackTranscoder != null) {
                     mVideoTrackTranscoder.release();
                     mVideoTrackTranscoder = null;
-                }
-                if (mAudioTrackTranscoder != null) {
-                    mAudioTrackTranscoder.release();
-                    mAudioTrackTranscoder = null;
                 }
                 if (mExtractor != null) {
                     mExtractor.release();
@@ -137,18 +131,6 @@ public class MediaTranscoderEngine {
             // skip
         }
 
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-//            String locationString = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION);
-//            if (locationString != null) {
-//                float[] location = new ISO6709LocationParser().parse(locationString);
-//                if (location != null) {
-//                    mMuxer.setLocation(location[0], location[1]);
-//                } else {
-//                    Log.d(TAG, "Failed to parse the location metadata: " + locationString);
-//                }
-//            }
-//        }
-
         try {
             mDurationUs = Long.parseLong(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) * 1000;
         } catch (NumberFormatException e) {
@@ -158,17 +140,15 @@ public class MediaTranscoderEngine {
     }
 
     private void setupTrackTranscoders(MediaFormatStrategy formatStrategy) {
-        MediaExtractorUtils.TrackResult trackResult = MediaExtractorUtils.getFirstVideoAndAudioTrack(mExtractor);
+        MediaExtractorUtils.TrackResult trackResult = MediaExtractorUtils.getFirstVideoTrack(mExtractor);
         MediaFormat videoOutputFormat = formatStrategy.createVideoOutputFormat(trackResult.mVideoTrackFormat);
-        MediaFormat audioOutputFormat = formatStrategy.createAudioOutputFormat(trackResult.mAudioTrackFormat);
-        if (videoOutputFormat == null && audioOutputFormat == null) {
-            throw new InvalidOutputFormatException("MediaFormatStrategy returned pass-through for both video and audio. No transcoding is necessary.");
+        if (videoOutputFormat == null) {
+            throw new InvalidOutputFormatException("MediaFormatStrategy returned pass-through for both video. No transcoding is necessary.");
         }
         QueuedMuxer queuedMuxer = new QueuedMuxer(mMuxer, new QueuedMuxer.Listener() {
             @Override
             public void onDetermineOutputFormat() {
                 MediaFormatValidator.validateVideoOutputFormat(mVideoTrackTranscoder.getDeterminedFormat());
-                MediaFormatValidator.validateAudioOutputFormat(mAudioTrackTranscoder.getDeterminedFormat());
             }
         });
 
@@ -178,14 +158,7 @@ public class MediaTranscoderEngine {
             mVideoTrackTranscoder = new VideoTrackTranscoder(mExtractor, trackResult.mVideoTrackIndex, videoOutputFormat, queuedMuxer);
         }
         mVideoTrackTranscoder.setup();
-        if (audioOutputFormat == null) {
-            mAudioTrackTranscoder = new PassThroughTrackTranscoder(mExtractor, trackResult.mAudioTrackIndex, queuedMuxer, QueuedMuxer.SampleType.AUDIO);
-        } else {
-            mAudioTrackTranscoder = new AudioTrackTranscoder(mExtractor, trackResult.mAudioTrackIndex, audioOutputFormat, queuedMuxer);
-        }
-        mAudioTrackTranscoder.setup();
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
-        mExtractor.selectTrack(trackResult.mAudioTrackIndex);
     }
 
     private void runPipelines() throws InterruptedException {
@@ -195,14 +168,12 @@ public class MediaTranscoderEngine {
             mProgress = progress;
             if (mProgressCallback != null) mProgressCallback.onProgress(progress); // unknown
         }
-        while (!(mVideoTrackTranscoder.isFinished() && mAudioTrackTranscoder.isFinished())) {
-            boolean stepped = mVideoTrackTranscoder.stepPipeline()
-                    || mAudioTrackTranscoder.stepPipeline();
+        while (!mVideoTrackTranscoder.isFinished()) {
+            boolean stepped = mVideoTrackTranscoder.stepPipeline();
             loopCount++;
             if (mDurationUs > 0 && loopCount % PROGRESS_INTERVAL_STEPS == 0) {
                 double videoProgress = mVideoTrackTranscoder.isFinished() ? 1.0 : Math.min(1.0, (double) mVideoTrackTranscoder.getWrittenPresentationTimeUs() / mDurationUs);
-                double audioProgress = mAudioTrackTranscoder.isFinished() ? 1.0 : Math.min(1.0, (double) mAudioTrackTranscoder.getWrittenPresentationTimeUs() / mDurationUs);
-                double progress = (videoProgress + audioProgress) / 2.0;
+                double progress = videoProgress;
                 mProgress = progress;
                 if (mProgressCallback != null) mProgressCallback.onProgress(progress);
             }

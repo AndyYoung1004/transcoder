@@ -66,7 +66,6 @@ public class MediaTranscoder {
 
     /**
      * Transcodes video file asynchronously.
-     * Audio track will be kept unchanged.
      *
      * @param inFileDescriptor FileDescriptor for input.
      * @param outPath          File path for output.
@@ -80,17 +79,11 @@ public class MediaTranscoder {
             public MediaFormat createVideoOutputFormat(MediaFormat inputFormat) {
                 return MediaFormatPresets.getExportPreset960x540();
             }
-
-            @Override
-            public MediaFormat createAudioOutputFormat(MediaFormat inputFormat) {
-                return null;
-            }
         }, listener);
     }
 
     /**
      * Transcodes video file asynchronously.
-     * Audio track will be kept unchanged.
      *
      * @param inPath            File path for input.
      * @param outPath           File path for output.
@@ -151,7 +144,6 @@ public class MediaTranscoder {
 
     /**
      * Transcodes video file asynchronously.
-     * Audio track will be kept unchanged.
      *
      * @param inFileDescriptor  FileDescriptor for input.
      * @param outPath           File path for output.

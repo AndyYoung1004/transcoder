@@ -18,6 +18,7 @@ package com.example.transcoder.engine;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.util.Log;
 
 import com.example.transcoder.format.MediaFormatExtraConstants;
 
@@ -161,6 +162,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
         }
         int sampleSize = mExtractor.readSampleData(mDecoderInputBuffers[result], 0);
         boolean isKeyFrame = (mExtractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0;
+        Log.w("yangliu","extractor queue input pts:" + mExtractor.getSampleTime());
         mDecoder.queueInputBuffer(result, 0, sampleSize, mExtractor.getSampleTime(), isKeyFrame ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0);
         mExtractor.advance();
         return DRAIN_STATE_CONSUMED;
@@ -181,6 +183,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
             mIsDecoderEOS = true;
             mBufferInfo.size = 0;
         }
+        Log.w("yangliu","decoder release pts:" + mBufferInfo.presentationTimeUs);
         boolean doRender = (mBufferInfo.size > 0);
         // NOTE: doRender will block if buffer (of encoder) is full.
         // Refer: http://bigflake.com/mediacodec/CameraToMpegTest.java.txt
@@ -223,6 +226,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
             mEncoder.releaseOutputBuffer(result, false);
             return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
+        Log.w("yangliu","encoder write pts pts:" + mBufferInfo.presentationTimeUs);
         mMuxer.writeSampleData(QueuedMuxer.SampleType.VIDEO, mEncoderOutputBuffers[result], mBufferInfo);
         mWrittenPresentationTimeUs = mBufferInfo.presentationTimeUs;
         mEncoder.releaseOutputBuffer(result, false);

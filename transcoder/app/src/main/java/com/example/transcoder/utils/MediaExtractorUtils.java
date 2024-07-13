@@ -31,15 +31,11 @@ public class MediaExtractorUtils {
         public int mVideoTrackIndex;
         public String mVideoTrackMime;
         public MediaFormat mVideoTrackFormat;
-        public int mAudioTrackIndex;
-        public String mAudioTrackMime;
-        public MediaFormat mAudioTrackFormat;
     }
 
-    public static TrackResult getFirstVideoAndAudioTrack(MediaExtractor extractor) {
+    public static TrackResult getFirstVideoTrack(MediaExtractor extractor) {
         TrackResult trackResult = new TrackResult();
         trackResult.mVideoTrackIndex = -1;
-        trackResult.mAudioTrackIndex = -1;
         int trackCount = extractor.getTrackCount();
         for (int i = 0; i < trackCount; i++) {
             MediaFormat format = extractor.getTrackFormat(i);
@@ -48,15 +44,11 @@ public class MediaExtractorUtils {
                 trackResult.mVideoTrackIndex = i;
                 trackResult.mVideoTrackMime = mime;
                 trackResult.mVideoTrackFormat = format;
-            } else if (trackResult.mAudioTrackIndex < 0 && mime.startsWith("audio/")) {
-                trackResult.mAudioTrackIndex = i;
-                trackResult.mAudioTrackMime = mime;
-                trackResult.mAudioTrackFormat = format;
+                break;
             }
-            if (trackResult.mVideoTrackIndex >= 0 && trackResult.mAudioTrackIndex >= 0) break;
         }
-        if (trackResult.mVideoTrackIndex < 0 || trackResult.mAudioTrackIndex < 0) {
-            throw new IllegalArgumentException("extractor does not contain video and/or audio tracks.");
+        if (trackResult.mVideoTrackIndex < 0) {
+            throw new IllegalArgumentException("extractor does not contain video and/or tracks.");
         }
         return trackResult;
     }

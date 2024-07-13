@@ -29,11 +29,4 @@ class MediaFormatValidator {
             throw new InvalidOutputFormatException("Video codecs other than AVC is not supported, actual mime type: " + mime);
         }
     }
-
-    public static void validateAudioOutputFormat(MediaFormat format) {
-        String mime = format.getString(MediaFormat.KEY_MIME);
-        if (!MediaFormatExtraConstants.MIMETYPE_AUDIO_AAC.equals(mime)) {
-            throw new InvalidOutputFormatException("Audio codecs other than AAC is not supported, actual mime type: " + mime);
-        }
-    }
 }

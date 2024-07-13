@@ -35,10 +35,4 @@ public class ExportPreset960x540Strategy implements MediaFormatStrategy {
         Log.d(TAG, String.format("inputFormat: %dx%d => outputFormat: %dx%d", width, height, outWidth, outHeight));
         return outputFormat;
     }
-
-    @Override
-    public MediaFormat createAudioOutputFormat(MediaFormat inputFormat) {
-        // TODO
-        return null;
-    }
 }

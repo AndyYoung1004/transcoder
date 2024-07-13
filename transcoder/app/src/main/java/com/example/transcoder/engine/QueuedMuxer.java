@@ -34,9 +34,7 @@ public class QueuedMuxer {
     private final MediaMuxer mMuxer;
     private final Listener mListener;
     private MediaFormat mVideoFormat;
-    private MediaFormat mAudioFormat;
     private int mVideoTrackIndex;
-    private int mAudioTrackIndex;
     private ByteBuffer mByteBuffer;
     private final List<SampleInfo> mSampleInfoList;
     private boolean mStarted;
@@ -52,9 +50,6 @@ public class QueuedMuxer {
             case VIDEO:
                 mVideoFormat = format;
                 break;
-            case AUDIO:
-                mAudioFormat = format;
-                break;
             default:
                 throw new AssertionError();
         }
@@ -62,13 +57,11 @@ public class QueuedMuxer {
     }
 
     private void onSetOutputFormat() {
-        if (mVideoFormat == null || mAudioFormat == null) return;
+        if (mVideoFormat == null) return;
         mListener.onDetermineOutputFormat();
 
         mVideoTrackIndex = mMuxer.addTrack(mVideoFormat);
         Log.v(TAG, "Added track #" + mVideoTrackIndex + " with " + mVideoFormat.getString(MediaFormat.KEY_MIME) + " to muxer");
-        mAudioTrackIndex = mMuxer.addTrack(mAudioFormat);
-        Log.v(TAG, "Added track #" + mAudioTrackIndex + " with " + mAudioFormat.getString(MediaFormat.KEY_MIME) + " to muxer");
         mMuxer.start();
         mStarted = true;
 
@@ -107,14 +100,12 @@ public class QueuedMuxer {
         switch (sampleType) {
             case VIDEO:
                 return mVideoTrackIndex;
-            case AUDIO:
-                return mAudioTrackIndex;
             default:
                 throw new AssertionError();
         }
     }
 
-    public enum SampleType {VIDEO, AUDIO}
+    public enum SampleType {VIDEO}
 
     private static class SampleInfo {
         private final SampleType mSampleType;

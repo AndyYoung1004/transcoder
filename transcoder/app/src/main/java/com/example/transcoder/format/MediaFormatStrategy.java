@@ -28,12 +28,4 @@ public interface MediaFormatStrategy {
      */
     public MediaFormat createVideoOutputFormat(MediaFormat inputFormat);
 
-    /**
-     * Caution: this method should return null currently.
-     *
-     * @return null for passthrough.
-     * @throws OutputFormatUnavailableException if input could not be transcoded because of restrictions.
-     */
-    public MediaFormat createAudioOutputFormat(MediaFormat inputFormat);
-
 }
